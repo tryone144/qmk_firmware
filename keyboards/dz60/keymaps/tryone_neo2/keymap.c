@@ -3,6 +3,9 @@
 #include "keymap_german.h"
 #include "keymap_neo2.h"
 
+#include "rgb_anim.h"
+
+
 // ==== LAYERS ====
 enum layers_idx {
   _BASE = 0,      // Base Layer (Software Neo2)
@@ -168,11 +171,6 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 
 
-//qk_tap_dance_action_t tap_dance_actions[] = {
-//  //Tap once for Esc, twice for Caps Lock
-//  [0]  = ACTION_TAP_DANCE_DOUBLE(KC_ESC, KC_CAPS)
-//};
-
 // ==== CUSTOM ACTIONS ====
 // Custom down event for compatibility macros
 #define _BB_MACRO_MOD_DOWN(default, shifted) \
@@ -194,37 +192,6 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   } else { \
     SEND_STRING((default)); \
   }
-
-#define RGB_ANIM_DURATION_LAYER 500
-#define RGB_ANIM_DURATION_WAKEUP 5000
-#define RGB_ANIM_MODE_LAYER (RGBLIGHT_MODE_SNAKE + 4)
-#define RGB_ANIM_MODE_WAKEUP (RGBLIGHT_MODE_BREATHING + 2)
-
-#define RGB_ANIM_HUE_BASE 0
-#define RGB_ANIM_HUE_QWERTZ 60
-#define RGB_ANIM_HUE_NEO2 120
-
-static rgblight_config_t rgb_config;
-//static bool rgb_suspend = false;
-static bool rgb_anim = false;
-static uint16_t rgb_anim_duration = 0;
-static uint16_t rgb_anim_timer = 0;
-
-static uint16_t kc_shift = 0;
-static uint8_t kc_modifiers = 0;
-
-// Safe previous config and start animation
-void rgb_anim_start(uint16_t duration, uint16_t mode, uint16_t hue, uint8_t sat, uint8_t val) {
-  rgb_config.raw = eeconfig_read_rgblight();
-  rgb_anim = true;
-  rgb_anim_duration = duration;
-  rgb_anim_timer = timer_read();
-
-  rgblight_enable_noeeprom();
-  rgblight_mode_noeeprom(RGBLIGHT_MODE_STATIC_LIGHT);
-  rgblight_sethsv_noeeprom(hue, sat, val);
-  rgblight_mode_noeeprom(mode);
-}
 
 // Disable RGB underglow
 void suspend_power_down_user(void) {
@@ -249,18 +216,17 @@ void suspend_wakeup_init_user(void) {
   }
 }
 
+
+static uint16_t kc_shift = 0;
+static uint8_t kc_modifiers = 0;
+
 void matrix_init_user(void) {
   kc_shift = 0;
   kc_modifiers = 0;
 }
 
 void matrix_scan_user(void) {
-  if (rgb_anim) { // Reset current animation if ANIM_TIME is over
-    if (timer_elapsed(rgb_anim_timer) > rgb_anim_duration) {
-      rgb_anim = false;
-      rgblight_update_dword(rgb_config.raw);
-    }
-  }
+  rgb_anim_update();
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
@@ -342,3 +308,5 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       return true;
   }
 }
+
+// vim: set ts=2 sw=2 sts=4 et:

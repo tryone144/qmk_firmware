@@ -8,6 +8,10 @@
 // Disable backlight when sleeping
 //#define RGBLIGHT_SLEEP
 
-#define TAPPING_TERM 200
+#define TAPPING_TERM 150
+
+// Disable legacy MACRO and FUNCTION keys
+#define NO_ACTION_MACRO
+#define NO_ACTION_FUNCTION
 
 #endif

@@ -28,8 +28,19 @@ enum layers_idx {
 #define _PN _PROGRAM
 
 // ==== KEYCODES ====
+enum function_keycodes {
+  BB_FN_PROGRAM = SAFE_RANGE,
+  BB_FN_LOCK_WIN,
+  BB_FN_RGB_CONFIG_1,
+  BB_FN_RGB_CONFIG_2,
+  BB_FN_RGB_CONFIG_3,
+  BB_FN_RGB_CONFIG_4,
+  BB_FN_RESET_EEPROM,
+  BB_FN_SAFE_RANGE,
+};
+
 enum macro_keycodes {
-  BB_MACRO_QWERTZ_1 = SAFE_RANGE,
+  BB_MACRO_QWERTZ_1 = BB_FN_SAFE_RANGE,
   //BB_MACRO_QWERTZ_2,
   //BB_MACRO_QWERTZ_3,
   //BB_MACRO_QWERTZ_4,
@@ -47,8 +58,6 @@ enum macro_keycodes {
   BB_MACRO_QWERTZ_DOT,
   BB_MACRO_QWERTZ_MINS,
   BB_MACRO_QWERTZ_LESS,
-  BB_MACRO_LOCK_WIN,
-  BB_MACRO_PROGRAM,
   BB_MACRO_SAFE_RANGE,
 };
 
@@ -62,8 +71,13 @@ enum macro_keycodes {
 #define MT_RSFT  RSFT_T(KC_ENT)
 #define MT_LCTL  LCTL_T(KC_ESC)
 
-#define _BB_LOCK BB_MACRO_LOCK_WIN
-#define _BB_PN   BB_MACRO_PROGRAM
+#define _BB_PN   BB_FN_PROGRAM
+#define _BB_LOCK BB_FN_LOCK_WIN
+#define _BB_RST  BB_FN_RESET_EEPROM
+#define _BB_RGB1 BB_FN_RGB_CONFIG_1
+#define _BB_RGB2 BB_FN_RGB_CONFIG_2
+#define _BB_RGB3 BB_FN_RGB_CONFIG_3
+#define _BB_RGB4 BB_FN_RGB_CONFIG_4
 
 #define _QL_HASH BB_MACRO_QWERTZ_HASH
 #define _QL_PLUS BB_MACRO_QWERTZ_PLUS
@@ -218,8 +232,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   /* === PROGRAMMING LAYER === (Programming functions: Layer switching / RGB Lighting) */
   [_PROGRAM] = LAYOUT_60_iso_split_2fn(
-    RESET,    DF(_BL),  DF(_QL),  DF(_NL),  DF(_40),  XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,
-    XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      BL_INC,   BL_BRTG,
+    RESET,    DF(_BL),  DF(_QL),  DF(_NL),  DF(_40),  XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      _BB_RST,
+    XXX,      _BB_RGB1, _BB_RGB2, _BB_RGB3, _BB_RGB4, XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      BL_INC,   BL_BRTG,
     MG_USCCL, RGB_VAI,  RGB_HUI,  RGB_SAI,  XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      BL_DEC,   BL_TOGG,  XXX,
     ___XX___, RGB_MOD,  RGB_VAD,  RGB_HUD,  RGB_SAD,  XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      ___XX___, ___XX___,
     MG_SCCL,  _BB_LOCK, XXX,      RGB_TOG,            XXX,                XXX,                          XXX,      _BB_LOCK, XXX,      XXX
@@ -228,30 +242,6 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 
 // ==== CUSTOM ACTIONS ====
-// Disable RGB underglow
-void suspend_power_down_user(void) {
-  rgblight_disable_noeeprom();
-}
-
-// Highlight current layer on wakeup
-void suspend_wakeup_init_user(void) {
-  uint8_t layer = biton32(default_layer_state);
-  switch (layer) {
-    case _BASE:
-      rgb_anim_start(RGB_ANIM_DURATION_WAKEUP, RGB_ANIM_MODE_WAKEUP, RGB_ANIM_HUE_BASE, 255, 255);
-      break;
-    case _QWERTZ:
-      rgb_anim_start(RGB_ANIM_DURATION_WAKEUP, RGB_ANIM_MODE_WAKEUP, RGB_ANIM_HUE_QWERTZ, 255, 255);
-      break;
-    case _NEO2:
-      rgb_anim_start(RGB_ANIM_DURATION_WAKEUP, RGB_ANIM_MODE_WAKEUP, RGB_ANIM_HUE_NEO2, 255, 255);
-      break;
-    case _EMULATOR:
-      rgb_anim_start(RGB_ANIM_DURATION_WAKEUP, RGB_ANIM_MODE_WAKEUP, RGB_ANIM_HUE_EMULATOR, 255, 255);
-      break;
-  }
-}
-
 
 // Custom down event for compatibility macros
 #define _BB_MACRO_MOD_DOWN(default, shifted) \
@@ -274,25 +264,80 @@ void suspend_wakeup_init_user(void) {
     SEND_STRING((default)); \
   }
 
-static uint16_t kc_shift = 0;
-static uint8_t kc_modifiers = 0;
+// User configuration from EEPROM
+typedef union {
+  uint32_t raw;
+  struct {
+    bool win_locked :1;
+  };
+} user_config_t;
 
+typedef struct {
+  struct {
+    uint32_t config_1;
+    uint32_t config_2;
+    uint32_t config_3;
+    uint32_t config_4;
+  } rgb;
+} volatile_config_t;
+
+user_config_t user_config;
+volatile_config_t volatile_config;
+
+static uint16_t kc_shift = 0;
+//static uint8_t kc_modifiers = 0;
+static uint16_t tap_timer = 0;
+
+
+// Suspend: Disable RGB underglow
+void suspend_power_down_user(void) {
+  rgblight_disable_noeeprom();
+}
+
+// Wakeup: Highlight current layer on wakeup
+void suspend_wakeup_init_user(void) {
+  uint8_t layer = biton32(default_layer_state);
+  switch (layer) {
+    case _BASE:
+      rgb_anim_start(RGB_ANIM_DURATION_WAKEUP, RGB_ANIM_MODE_WAKEUP, RGB_ANIM_HUE_BASE, 255, 255);
+      break;
+    case _QWERTZ:
+      rgb_anim_start(RGB_ANIM_DURATION_WAKEUP, RGB_ANIM_MODE_WAKEUP, RGB_ANIM_HUE_QWERTZ, 255, 255);
+      break;
+    case _NEO2:
+      rgb_anim_start(RGB_ANIM_DURATION_WAKEUP, RGB_ANIM_MODE_WAKEUP, RGB_ANIM_HUE_NEO2, 255, 255);
+      break;
+    case _EMULATOR:
+      rgb_anim_start(RGB_ANIM_DURATION_WAKEUP, RGB_ANIM_MODE_WAKEUP, RGB_ANIM_HUE_EMULATOR, 255, 255);
+      break;
+  }
+}
+
+// Startup: Init keyboard state
 void matrix_init_user(void) {
   kc_shift = 0;
-  kc_modifiers = 0;
+  //kc_modifiers = 0;
+
+  // Read user config from EEPROM
+  user_config.raw = eeconfig_read_user();
+
+  // Clear volatile config in RAM
+  volatile_config.rgb.config_1 = 0;
+  volatile_config.rgb.config_2 = 0;
+  volatile_config.rgb.config_3 = 0;
+  volatile_config.rgb.config_4 = 0;
 }
 
 void matrix_scan_user(void) {
   rgb_anim_update();
 }
 
-static bool win_locked = false;
-static uint16_t tap_timer = 0;
-
+// Handle keypress/release events
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   uint8_t is_shift = keyboard_report->mods & (MOD_BIT(KC_LSFT) | MOD_BIT(KC_RSFT));
 
   switch (keycode) {
+    // ==== Animate Layer switching ====
     case DF(_BASE): // Layer switch animation => Software Neo2
       if (record->event.pressed) {
         rgb_anim_start(RGB_ANIM_DURATION_LAYER, RGB_ANIM_MODE_LAYER, RGB_ANIM_HUE_BASE, 255, 255);
@@ -314,10 +359,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
       return true;
 
+    // ==== Handle Win-Locked keys ====
     case KC_LGUI:
-      return !win_locked;
+      return !user_config.win_locked;
     case MT_LCTL:
-      if (win_locked) {
+      if (user_config.win_locked) {
         if (record->event.pressed) {
           SEND_STRING(SS_DOWN(X_LCTRL));
         } else {
@@ -327,7 +373,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
       return true;
     case MT_RSFT:
-      if (win_locked) {
+      if (user_config.win_locked) {
         if (record->event.pressed) {
           SEND_STRING(SS_DOWN(X_RSHIFT));
         } else {
@@ -337,17 +383,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
       return true;
 
-    case BB_MACRO_LOCK_WIN: // Lock WIN key and tap-action keys
-      if (record->event.pressed) {
-        win_locked = !win_locked;
-        if (win_locked) {
-          rgb_anim_start(RGB_ANIM_DURATION_WINLOCK, RGB_ANIM_MODE_WINLOCK, RGB_ANIM_HUE_WIN_LOCKED, 255, 255);
-        } else {
-          rgb_anim_start(RGB_ANIM_DURATION_WINLOCK, RGB_ANIM_MODE_WINLOCK, RGB_ANIM_HUE_WIN_UNLOCKED, 255, 255);
-        }
-      }
-      return false;
-    case BB_MACRO_PROGRAM: // Indicate current layer on PROGRAM tap
+    // ==== Custom function keys ====
+    case BB_FN_PROGRAM: // Indicate current layer on PROGRAM tap
       if (record->event.pressed) {
         tap_timer = timer_read();
         layer_on(_PROGRAM);
@@ -371,7 +408,61 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         }
       }
       return false;
+    case BB_FN_LOCK_WIN: // Lock WIN key and tap-action keys
+      if (record->event.pressed) {
+        user_config.win_locked = !user_config.win_locked;
+        eeconfig_update_user(user_config.raw); // Update EEPROM config
+        if (user_config.win_locked) {
+          rgb_anim_start(RGB_ANIM_DURATION_WINLOCK, RGB_ANIM_MODE_WINLOCK, RGB_ANIM_HUE_WIN_LOCKED, 255, 255);
+        } else {
+          rgb_anim_start(RGB_ANIM_DURATION_WINLOCK, RGB_ANIM_MODE_WINLOCK, RGB_ANIM_HUE_WIN_UNLOCKED, 255, 255);
+        }
+      }
+      return false;
+    case BB_FN_RGB_CONFIG_1: // Load / Save RGB configuratio from RAM
+      if (record->event.pressed) {
+        if (is_shift) { // Save to RAM
+          volatile_config.rgb.config_1 = eeconfig_read_rgblight();
+        } else { // Load from RAM
+          rgblight_update_dword(volatile_config.rgb.config_1);
+        }
+      }
+      return false;
+    case BB_FN_RGB_CONFIG_2: // Load / Save RGB configuratio from RAM
+      if (record->event.pressed) {
+        if (is_shift) { // Save to RAM
+          volatile_config.rgb.config_2 = eeconfig_read_rgblight();
+        } else { // Load from RAM
+          rgblight_update_dword(volatile_config.rgb.config_2);
+        }
+      }
+      return false;
+    case BB_FN_RGB_CONFIG_3: // Load / Save RGB configuratio from RAM
+      if (record->event.pressed) {
+        if (is_shift) { // Save to RAM
+          volatile_config.rgb.config_3 = eeconfig_read_rgblight();
+        } else { // Load from RAM
+          rgblight_update_dword(volatile_config.rgb.config_3);
+        }
+      }
+      return false;
+    case BB_FN_RGB_CONFIG_4: // Load / Save RGB configuratio from RAM
+      if (record->event.pressed) {
+        if (is_shift) { // Save to RAM
+          volatile_config.rgb.config_4 = eeconfig_read_rgblight();
+        } else { // Load from RAM
+          rgblight_update_dword(volatile_config.rgb.config_4);
+        }
+      }
+      return false;
+    case BB_FN_RESET_EEPROM: // Reset user configuration in EEPROM
+      if (record->event.pressed) {
+        eeconfig_init();
+        user_config.raw = eeconfig_read_user();
+      }
+      return false;
 
+    // ==== Neo2 emulation compatibility macros ====
     case BB_MACRO_QWERTZ_HASH: // Compat macro: QWERTZ <#> on Neo2 emulation
       if (record->event.pressed) {
         _BB_MACRO_MOD_DOWN(SS_DOWN(X_CAPSLOCK) SS_DOWN(X_Z),  // <#> == [ <NEO_L1> + <NEO_UE> ]

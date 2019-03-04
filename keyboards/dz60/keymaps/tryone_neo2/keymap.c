@@ -11,7 +11,8 @@ enum layers_idx {
   _BASE = 0,      // Base Layer (Software Neo2)
   _QWERTZ,        // QWERTY Hardware emulation on Neo2 Software
   _NEO2,          // Neo2 Hardware emulation on QWERTZ Software
-  _NEO2_L1,       // Neo2 (Layer 1) Hardware emulation on QWERTZ Software
+  _NEO2_L1,       // Neo2 (Layer 1 / Symbols) Hardware emulation on QWERTZ Software
+  _NEO2_L2,       // Neo2 (Layer 2 / Navigation) Hardware emulation on QWERTZ Software
   _FUNCTION,      // Function Layer
   _PROGRAM,       // Programming functions (Layer / RGB Lighting)
 };
@@ -20,6 +21,7 @@ enum layers_idx {
 #define _QL _QWERTZ
 #define _NL _NEO2
 #define _NL1 _NEO2_L1
+#define _NL2 _NEO2_L2
 #define _FN _FUNCTION
 #define _PN _PROGRAM
 
@@ -43,6 +45,8 @@ enum macro_keycodes {
   BB_MACRO_QWERTZ_DOT,
   BB_MACRO_QWERTZ_MINS,
   BB_MACRO_QWERTZ_LESS,
+  BB_MACRO_LOCK_WIN,
+  BB_MACRO_PROGRAM,
   BB_MACRO_SAFE_RANGE,
 };
 
@@ -53,6 +57,12 @@ enum macro_keycodes {
 #define MG_SCCL  MAGIC_SWAP_CONTROL_CAPSLOCK
 #define MG_USCCL MAGIC_UNSWAP_CONTROL_CAPSLOCK
 
+#define MT_RSFT  RSFT_T(KC_ENT)
+#define MT_LCTL  LCTL_T(KC_ESC)
+
+#define _BB_LOCK BB_MACRO_LOCK_WIN
+#define _BB_PN   BB_MACRO_PROGRAM
+
 #define _QL_HASH BB_MACRO_QWERTZ_HASH
 #define _QL_PLUS BB_MACRO_QWERTZ_PLUS
 #define _QL_COMM BB_MACRO_QWERTZ_COMM
@@ -62,6 +72,9 @@ enum macro_keycodes {
 
 #define _NL_NL1L MO(_NEO2_L1)
 #define _NL_NL1R MO(_NEO2_L1)
+#define _NL_NL2L MO(_NEO2_L2)
+#define _NL_NL2R MO(_NEO2_L2)
+
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
@@ -71,19 +84,19 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
    * |-----------------------------------------------------------------------------------------+
    * | Tab    |  X  |  V  |  L  |  C  |  W  |  K  |  H  |  G  |  F  |  Q  |  ß  |  ´  |  Enter |
    * |---------------------------------------------------------------------------------+       +
-   * |  Ctrl   |  U  |  I  |  A  |  E  |  O  |  S  |  N  |  R  |  T  |  D  |  Y  |NeoL1|       |
+   * |Ctrl(Esc)|  U  |  I  |  A  |  E  |  O  |  S  |  N  |  R  |  T  |  D  |  Y  |NeoL1|       |
    * |-----------------------------------------------------------------------------------------+
    * |LShift|NeoL2|  Ü  |  Ö  |  Ä  |  P  |  Z  |  B  |  M  |  ,  |  .  |  J  |  RShift  | Pn  |
    * |-----------------------------------------------------------------------------------------+
-   * | NeoL1 | Win  | Alt  |  Space     |  Fn   |   RShift        | NeoL2 | Win  | Ctrl | Menu |
+   * | NeoL1 | Win  | Alt  |  Space     |  Fn   |  RShift(Enter)  | NeoL2 | Win  | Ctrl | Menu |
    * `-----------------------------------------------------------------------------------------'
    */
   [_BASE] = LAYOUT_60_iso_split_2fn(
     KC_ESC,   NEO_1,    NEO_2,    NEO_3,    NEO_4,    NEO_5,    NEO_6,    NEO_7,    NEO_8,    NEO_9,    NEO_0,    NEO_MINS, NEO_GRV,  KC_BSPC,
     KC_TAB,   NEO_X,    NEO_V,    NEO_L,    NEO_C,    NEO_W,    NEO_K,    NEO_H,    NEO_G,    NEO_F,    NEO_Q,    NEO_SS,   NEO_ACUT,
-    KC_LCTL,  NEO_U,    NEO_I,    NEO_A,    NEO_E,    NEO_O,    NEO_S,    NEO_N,    NEO_R,    NEO_T,    NEO_D,    NEO_Y,    NEO_L1_R, KC_ENT,
-    KC_LSFT,  NEO_L2_L, NEO_UE,   NEO_OE,   NEO_AE,   NEO_P,    NEO_Z,    NEO_B,    NEO_M,    NEO_COMM, NEO_DOT,  NEO_J,    KC_RSFT,  MO(_PN),
-    NEO_L1_L, KC_LGUI,  KC_LALT,  KC_SPC,             MO(_FN),            KC_RSFT,                      NEO_L2_R, KC_RGUI,  KC_RCTL,  KC_APP
+    MT_LCTL,  NEO_U,    NEO_I,    NEO_A,    NEO_E,    NEO_O,    NEO_S,    NEO_N,    NEO_R,    NEO_T,    NEO_D,    NEO_Y,    NEO_L1_R, KC_ENT,
+    KC_LSFT,  NEO_L2_L, NEO_UE,   NEO_OE,   NEO_AE,   NEO_P,    NEO_Z,    NEO_B,    NEO_M,    NEO_COMM, NEO_DOT,  NEO_J,    KC_RSFT,  _BB_PN,
+    NEO_L1_L, KC_LGUI,  KC_LALT,  KC_SPC,             MO(_FN),            MT_RSFT,                      NEO_L2_R, KC_RGUI,  KC_RCTL,  KC_APP
   ),
 
   /* === QWERTZ LAYER === (Hardware emulation of QWERTZ on Software Neo2)
@@ -92,19 +105,19 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
    * |-----------------------------------------------------------------------------------------+
    * | Tab    |  Q  |  W  |  E  |  R  |  T  |  Z  |  U  |  I  |  O  |  P  |  Ü  |  +  |  Enter |
    * |---------------------------------------------------------------------------------+       +
-   * |  Ctrl   |  A  |  S  |  D  |  F  |  G  |  H  |  J  |  K  |  L  |  Ö  |  Ä  |  #  |       |
+   * |Ctrl(Esc)|  A  |  S  |  D  |  F  |  G  |  H  |  J  |  K  |  L  |  Ö  |  Ä  |  #  |       |
    * |-----------------------------------------------------------------------------------------+
    * |LShift|  <  |  Y  |  X  |  C  |  V  |  B  |  N  |  M  |  ,  |  .  |  -  |  RShift  | Pn  |
    * |-----------------------------------------------------------------------------------------+
-   * |       | Win  | Alt  |  Space     |  Fn   |   RShift        | AltGr | Win  | Ctrl | Menu |
+   * |       | Win  | Alt  |  Space     |  Fn   |  RShift(Enter)  | AltGr | Win  | Ctrl | Menu |
    * `-----------------------------------------------------------------------------------------'
    */
   [_QWERTZ] = LAYOUT_60_iso_split_2fn(
     KC_ESC,   NEO_1,    NEO_2,    NEO_3,    NEO_4,    NEO_5,    NEO_6,    NEO_7,    NEO_8,    NEO_9,    NEO_0,    NEO_SS,   NEO_ACUT, KC_BSPC,
     KC_TAB,   NEO_Q,    NEO_W,    NEO_E,    NEO_R,    NEO_T,    NEO_Z,    NEO_U,    NEO_I,    NEO_O,    NEO_P,    NEO_UE,   _QL_PLUS,
-    KC_LCTL,  NEO_A,    NEO_S,    NEO_D,    NEO_F,    NEO_G,    NEO_H,    NEO_J,    NEO_K,    NEO_L,    NEO_OE,   NEO_AE,   _QL_HASH, KC_ENT,
-    KC_LSFT,  _QL_LESS, NEO_Y,    NEO_X,    NEO_C,    NEO_V,    NEO_B,    NEO_N,    NEO_M,    _QL_COMM, _QL_DOT,  _QL_MINS, KC_RSFT,  MO(_PN),
-    XXX,      KC_LGUI,  KC_LALT,  KC_SPC,             MO(_FN),            KC_RSFT,                      XXX,      KC_RGUI,  KC_RCTL,  KC_APP
+    MT_LCTL,  NEO_A,    NEO_S,    NEO_D,    NEO_F,    NEO_G,    NEO_H,    NEO_J,    NEO_K,    NEO_L,    NEO_OE,   NEO_AE,   _QL_HASH, KC_ENT,
+    KC_LSFT,  _QL_LESS, NEO_Y,    NEO_X,    NEO_C,    NEO_V,    NEO_B,    NEO_N,    NEO_M,    _QL_COMM, _QL_DOT,  _QL_MINS, KC_RSFT,  _BB_PN,
+    XXX,      KC_LGUI,  KC_LALT,  KC_SPC,             MO(_FN),            MT_RSFT,                      XXX,      KC_RGUI,  KC_RCTL,  KC_APP
   ),
 
   /* === NEO2 LAYER === (Hardware emulation of Neo2 on Software QWERTZ)
@@ -113,19 +126,19 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
    * |-----------------------------------------------------------------------------------------+
    * | Tab    |  X  |  V  |  L  |  C  |  W  |  K  |  H  |  G  |  F  |  Q  |  ß  |  ´  |  Enter |
    * |---------------------------------------------------------------------------------+       +
-   * |  Ctrl   |  U  |  I  |  A  |  E  |  O  |  S  |  N  |  R  |  T  |  D  |  Y  |NeoL1|       |
+   * |Ctrl(Esc)|  U  |  I  |  A  |  E  |  O  |  S  |  N  |  R  |  T  |  D  |  Y  |NeoL1|       |
    * |-----------------------------------------------------------------------------------------+
    * |LShift|NeoL2|  Ü  |  Ö  |  Ä  |  P  |  Z  |  B  |  M  |  ,  |  .  |  J  |  RShift  | Pn  |
    * |-----------------------------------------------------------------------------------------+
-   * | NeoL1 | Win  | Alt  |  Space     |  Fn   |   RShift        | NeoL2 | Win  | Ctrl | Menu |
+   * | NeoL1 | Win  | Alt  |  Space     |  Fn   |  RShift(Enter)  | NeoL2 | Win  | Ctrl | Menu |
    * `-----------------------------------------------------------------------------------------'
    */
   [_NEO2] = LAYOUT_60_iso_split_2fn(
     KC_ESC,   DE_1,     DE_2,     DE_3,     DE_4,     DE_5,     DE_6,     DE_7,     DE_8,     DE_9,     DE_0,     DE_MINS,  DE_GRV,   KC_BSPC,
     KC_TAB,   DE_X,     DE_V,     DE_L,     DE_C,     DE_W,     DE_K,     DE_H,     DE_G,     DE_F,     DE_Q,     DE_SS,    DE_ACUT,
-    KC_LCTL,  DE_U,     DE_I,     DE_A,     DE_E,     DE_O,     DE_S,     DE_N,     DE_R,     DE_T,     DE_D,     DE_Y,     _NL_NL1R, KC_ENT,
-    KC_LSFT,  XXX,      DE_UE,    DE_OE,    DE_AE,    DE_P,     DE_Z,     DE_B,     DE_M,     DE_COMM,  DE_DOT,   DE_J,     KC_RSFT,  MO(_PN),
-    _NL_NL1L, KC_LGUI,  KC_LALT,  KC_SPC,             MO(_FN),            KC_RSFT,                      XXX,      KC_RGUI,  KC_RCTL,  KC_APP
+    MT_LCTL,  DE_U,     DE_I,     DE_A,     DE_E,     DE_O,     DE_S,     DE_N,     DE_R,     DE_T,     DE_D,     DE_Y,     _NL_NL1R, KC_ENT,
+    KC_LSFT,  _NL_NL2L, DE_UE,    DE_OE,    DE_AE,    DE_P,     DE_Z,     DE_B,     DE_M,     DE_COMM,  DE_DOT,   DE_J,     KC_RSFT,  _BB_PN,
+    _NL_NL1L, KC_LGUI,  KC_LALT,  KC_SPC,             MO(_FN),            MT_RSFT,                      _NL_NL2R, KC_RGUI,  KC_RCTL,  KC_APP
   ),
 
   /* === NEO2 LAYER (LAYER 1) === (Hardware emulation of Neo2 Layer 1 on Software QWERTZ)
@@ -134,7 +147,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
    * |-----------------------------------------------------------------------------------------+
    * | Tab    | XXX |  _  |  [  |  ]  |  ^  |  !  |  <  |  >  |  =  |  &  | XXX | XXX |  Enter |
    * |---------------------------------------------------------------------------------+       +
-   * |  Ctrl   |  \  |  /  |  {  |  }  |  *  |  ?  |  (  |  )  |  -  |  :  |  @  |NeoL1|       |
+   * |Ctrl(Esc)|  \  |  /  |  {  |  }  |  *  |  ?  |  (  |  )  |  -  |  :  |  @  |NeoL1|       |
    * |-----------------------------------------------------------------------------------------+
    * | XXX  | XXX |  #  |  $  |  |  |  ~  |  `  |  +  |  %  |  "  |  '  |  ;  |   XXX    | Pn  |
    * |-----------------------------------------------------------------------------------------+
@@ -144,13 +157,33 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   [_NEO2_L1] = LAYOUT_60_iso_split_2fn(
     KC_ESC,   XXX,      DE_SQ2,   DE_SQ3,   XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      KC_BSPC,
     KC_TAB,   XXX,      DE_UNDS,  DE_LBRC,  DE_RBRC,  DE_CIRC,  DE_EXLM,  DE_LESS,  DE_MORE,  DE_EQL,   DE_AMPR,  XXX,      XXX,
-    KC_LCTL,  DE_BSLS,  DE_SLSH,  DE_LCBR,  DE_RCBR,  DE_ASTR,  DE_QST,   DE_LPRN,  DE_RPRN,  DE_MINS,  DE_COLN,  DE_AT,    ___XX___, KC_ENT,
-    XXX,      XXX,      DE_HASH,  DE_DLR,   DE_PIPE,  DE_TILD,  DE_GRV,   DE_PLUS,  DE_PERC,  DE_DQOT,  DE_QUOT,  DE_SCLN,  XXX,      MO(_PN),
+    MT_LCTL,  DE_BSLS,  DE_SLSH,  DE_LCBR,  DE_RCBR,  DE_ASTR,  DE_QST,   DE_LPRN,  DE_RPRN,  DE_MINS,  DE_COLN,  DE_AT,    ___XX___, KC_ENT,
+    XXX,      XXX,      DE_HASH,  DE_DLR,   DE_PIPE,  DE_TILD,  DE_GRV,   DE_PLUS,  DE_PERC,  DE_DQOT,  DE_QUOT,  DE_SCLN,  XXX,      _BB_PN,
     ___XX___, KC_LGUI,  KC_LALT,  KC_SPC,             MO(_FN),            XXX,                          XXX,      KC_RGUI,  KC_RCTL,  KC_APP
   ),
 
-  /* === FUNCTION LAYER ===
+  /* === NEO2 LAYER (LAYER 2) === (Hardware emulation of Neo2 Layer 2 on Software QWERTZ)
+   * ,-----------------------------------------------------------------------------------------.
+   * | Esc | XXX | XXX | XXX | XXX | XXX | XXX | XXX | XXX | XXX | XXX | XXX | XXX |   Bkspc   |
+   * |-----------------------------------------------------------------------------------------+
+   * | Tab    |PgUp |Bkspc| Up  | Del |PgDwn| XXX |  7  |  8  |  9  |  +  |  −  | XXX |  Enter |
+   * |---------------------------------------------------------------------------------+       +
+   * |Ctrl(Esc)|Home |Left |Down |Right| End | XXX |  4  |  5  |  6  |  ,  |  .  | XXX |       |
+   * |-----------------------------------------------------------------------------------------+
+   * | XXX  |NeoL2| Esc | Tab | XXX |Enter| XXX |  :  |  1  |  2  |  3  |  ;  |   XXX    | Pn  |
+   * |-----------------------------------------------------------------------------------------+
+   * | XXX   | Win  | Alt  |  0         |  Fn   |   XXX           | NeoL2 | Win  | Ctrl | Menu |
+   * `-----------------------------------------------------------------------------------------'
    */
+  [_NEO2_L2] = LAYOUT_60_iso_split_2fn(
+    KC_ESC,   XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      KC_BSPC,
+    KC_TAB,   KC_PGUP,  KC_BSPC,  KC_UP,    KC_DEL,   KC_PGDN,  XXX,      KC_KP_7,  KC_KP_8,  KC_KP_9,  KC_PPLS,  KC_PMNS,  XXX,
+    MT_LCTL,  KC_HOME,  KC_LEFT,  KC_DOWN,  KC_RIGHT, KC_END,   XXX,      KC_KP_4,  KC_KP_5,  KC_KP_6,  KC_PCMM,  KC_PDOT,  XXX,      KC_ENT,
+    XXX,      ___XX___, KC_ESC,   KC_TAB,   XXX,      KC_ENT,   XXX,      DE_COLN,  KC_KP_1,  KC_KP_2,  KC_KP_3,  DE_SCLN,  XXX,      _BB_PN,
+    XXX,      KC_LGUI,  KC_LALT,  KC_KP_0,            MO(_FN),            XXX,                          ___XX___, KC_RGUI,  KC_RCTL,  KC_APP
+  ),
+
+  /* === FUNCTION LAYER === */
   [_FUNCTION] = LAYOUT_60_iso_split_2fn(
     NEO_CIRC, KC_F1,    KC_F2,    KC_F3,    KC_F4,    KC_F5,    KC_F6,    KC_F7,    KC_F8,    KC_F9,    KC_F10,   KC_F11,   KC_F12,   KC_DEL,
     ________, ________, ________, ________, ________, ________, ________, KC_HOME,  KC_PGDN,  KC_PGUP,  KC_END,   KC_VOLU,  KC_MUTE,
@@ -159,14 +192,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ________, ________, ________, ________,           ___XX___,           ________,                     ________, ________, ________, ________
   ),
 
-  /* === PROGRAMMING LAYER === (Programming functions: Layer switching / RGB Lighting)
-   */
+  /* === PROGRAMMING LAYER === (Programming functions: Layer switching / RGB Lighting) */
   [_PROGRAM] = LAYOUT_60_iso_split_2fn(
     RESET,    DF(_BL),  DF(_QL),  DF(_NL),  XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,
     XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      BL_INC,   BL_BRTG,
     MG_USCCL, RGB_VAI,  RGB_HUI,  RGB_SAI,  XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      BL_DEC,   BL_TOGG,  XXX,
     ___XX___, RGB_MOD,  RGB_VAD,  RGB_HUD,  RGB_SAD,  XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      ___XX___, ___XX___,
-    MG_SCCL,  XXX,      XXX,      RGB_TOG,            XXX,                XXX,                          XXX,      XXX,      XXX,      XXX
+    MG_SCCL,  _BB_LOCK, XXX,      RGB_TOG,            XXX,                XXX,                          XXX,      _BB_LOCK, XXX,      XXX
   )
 };
 
@@ -229,6 +261,10 @@ void matrix_scan_user(void) {
   rgb_anim_update();
 }
 
+static uint16_t tap_timer;
+
+static bool win_locked = false;
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   uint8_t is_shift = keyboard_report->mods & (MOD_BIT(KC_LSFT) | MOD_BIT(KC_RSFT));
 
@@ -248,6 +284,63 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         rgb_anim_start(RGB_ANIM_DURATION_LAYER, RGB_ANIM_MODE_LAYER, RGB_ANIM_HUE_NEO2, 255, 255);
       }
       return true;
+
+    case KC_LGUI:
+      return !win_locked;
+    case MT_LCTL:
+      if (win_locked) {
+        if (record->event.pressed) {
+          SEND_STRING(SS_DOWN(X_LCTRL));
+        } else {
+          SEND_STRING(SS_UP(X_LCTRL));
+        }
+        return false;
+      }
+      return true;
+    case MT_RSFT:
+      if (win_locked) {
+        if (record->event.pressed) {
+          SEND_STRING(SS_DOWN(X_RSHIFT));
+        } else {
+          SEND_STRING(SS_UP(X_RSHIFT));
+        }
+        return false;
+      }
+      return true;
+
+    case BB_MACRO_LOCK_WIN: // Lock WIN key and tap-action keys
+      if (record->event.pressed) {
+        win_locked = !win_locked;
+        if (win_locked) {
+          rgb_anim_start(RGB_ANIM_DURATION_WINLOCK, RGB_ANIM_MODE_WINLOCK, RGB_ANIM_HUE_WIN_LOCKED, 255, 255);
+        } else {
+          rgb_anim_start(RGB_ANIM_DURATION_WINLOCK, RGB_ANIM_MODE_WINLOCK, RGB_ANIM_HUE_WIN_UNLOCKED, 255, 255);
+        }
+      }
+      return false;
+    case BB_MACRO_PROGRAM: // Indicate current layer on PROGRAM tap
+      if (record->event.pressed) {
+        tap_timer = timer_read();
+        layer_on(_PROGRAM);
+      } else {
+        layer_off(_PROGRAM);
+        if (timer_elapsed(tap_timer) < TAPPING_TERM) {
+          switch (biton32(default_layer_state)) {
+            case _BASE:
+              rgb_anim_start(RGB_ANIM_DURATION_LAYER, RGB_ANIM_MODE_LAYER, RGB_ANIM_HUE_BASE, 255, 255);
+              break;
+            case _QWERTZ:
+              rgb_anim_start(RGB_ANIM_DURATION_LAYER, RGB_ANIM_MODE_LAYER, RGB_ANIM_HUE_QWERTZ, 255, 255);
+              break;
+            case _NEO2:
+              rgb_anim_start(RGB_ANIM_DURATION_LAYER, RGB_ANIM_MODE_LAYER, RGB_ANIM_HUE_NEO2, 255, 255);
+              break;
+            default:
+              rgb_anim_start(RGB_ANIM_DURATION_LAYER, RGB_ANIM_MODE_LAYER, 270, 255, 255);
+          }
+        }
+      }
+      return false;
 
     case BB_MACRO_QWERTZ_HASH: // Compat macro: QWERTZ <#> on Neo2 emulation
       if (record->event.pressed) {

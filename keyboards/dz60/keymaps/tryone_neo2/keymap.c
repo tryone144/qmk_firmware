@@ -9,6 +9,7 @@
 // ==== LAYERS ====
 enum layers_idx {
   _BASE = 0,      // Base Layer (Software Neo2)
+  _EMULATOR,      // 40% Emulation Layer (Software Neo2)
   _QWERTZ,        // QWERTY Hardware emulation on Neo2 Software
   _NEO2,          // Neo2 Hardware emulation on QWERTZ Software
   _NEO2_L1,       // Neo2 (Layer 1 / Symbols) Hardware emulation on QWERTZ Software
@@ -18,6 +19,7 @@ enum layers_idx {
 };
 
 #define _BL _BASE
+#define _40 _EMULATOR
 #define _QL _QWERTZ
 #define _NL _NEO2
 #define _NL1 _NEO2_L1
@@ -76,6 +78,7 @@ enum macro_keycodes {
 #define _NL_NL2R MO(_NEO2_L2)
 
 
+// ==== LAYOUT CONFIGURATION ====
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   /* === BASE LAYER === (software Neo2)
@@ -97,6 +100,27 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     MT_LCTL,  NEO_U,    NEO_I,    NEO_A,    NEO_E,    NEO_O,    NEO_S,    NEO_N,    NEO_R,    NEO_T,    NEO_D,    NEO_Y,    NEO_L1_R, KC_ENT,
     KC_LSFT,  NEO_L2_L, NEO_UE,   NEO_OE,   NEO_AE,   NEO_P,    NEO_Z,    NEO_B,    NEO_M,    NEO_COMM, NEO_DOT,  NEO_J,    KC_RSFT,  _BB_PN,
     NEO_L1_L, KC_LGUI,  KC_LALT,  KC_SPC,             MO(_FN),            MT_RSFT,                      NEO_L2_R, KC_RGUI,  KC_RCTL,  KC_APP
+  ),
+
+  /* === 40% EMULATION LAYER === (software Neo2)
+   * ,-----------------------------------------------------------------------------------------.
+   * | Esc | XXX | XXX | XXX | XXX | XXX | XXX | XXX | XXX | XXX | XXX | XXX | XXX |   XXX     |
+   * |-----------------------------------------------------------------------------------------+
+   * | Tab    |  X  |  V  |  L  |  C  |  W  |  K  |  H  |  G  |  F  |  Q  |  ß  |Bkspc|   XXX  |
+   * |---------------------------------------------------------------------------------+       +
+   * |Ctrl(Esc)|  U  |  I  |  A  |  E  |  O  |  S  |  N  |  R  |  T  |  D  |  Y  | XXX |       |
+   * |-----------------------------------------------------------------------------------------+
+   * |LShift| XXX |  Ü  |  Ö  |  Ä  |  P  |  Z  |  B  |  M  |  ,  |  .  |  J  |  RShift  | Pn  |
+   * |-----------------------------------------------------------------------------------------+
+   * | NeoL1 | Win  | Alt  |  Space     |  XXX  |  RShift(Enter)  | NeoL2 | Win  | Ctrl | Menu |
+   * `-----------------------------------------------------------------------------------------'
+   */
+  [_EMULATOR] = LAYOUT_60_iso_split_2fn(
+    XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,
+    KC_TAB,   NEO_X,    NEO_V,    NEO_L,    NEO_C,    NEO_W,    NEO_K,    NEO_H,    NEO_G,    NEO_F,    NEO_Q,    NEO_SS,   KC_BSPC,
+    MT_LCTL,  NEO_U,    NEO_I,    NEO_A,    NEO_E,    NEO_O,    NEO_S,    NEO_N,    NEO_R,    NEO_T,    NEO_D,    NEO_Y,    XXX,      XXX,
+    KC_LSFT,  XXX,      NEO_UE,   NEO_OE,   NEO_AE,   NEO_P,    NEO_Z,    NEO_B,    NEO_M,    NEO_COMM, NEO_DOT,  NEO_J,    KC_RSFT,  _BB_PN,
+    NEO_L1_L, KC_LGUI,  KC_LALT,  KC_SPC,             XXX,                MT_RSFT,                      NEO_L2_R, KC_RGUI,  KC_RCTL,  KC_APP
   ),
 
   /* === QWERTZ LAYER === (Hardware emulation of QWERTZ on Software Neo2)
@@ -194,7 +218,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   /* === PROGRAMMING LAYER === (Programming functions: Layer switching / RGB Lighting) */
   [_PROGRAM] = LAYOUT_60_iso_split_2fn(
-    RESET,    DF(_BL),  DF(_QL),  DF(_NL),  XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,
+    RESET,    DF(_BL),  DF(_QL),  DF(_NL),  DF(_40),  XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,
     XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      BL_INC,   BL_BRTG,
     MG_USCCL, RGB_VAI,  RGB_HUI,  RGB_SAI,  XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      BL_DEC,   BL_TOGG,  XXX,
     ___XX___, RGB_MOD,  RGB_VAD,  RGB_HUD,  RGB_SAD,  XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      ___XX___, ___XX___,
@@ -204,6 +228,31 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 
 // ==== CUSTOM ACTIONS ====
+// Disable RGB underglow
+void suspend_power_down_user(void) {
+  rgblight_disable_noeeprom();
+}
+
+// Highlight current layer on wakeup
+void suspend_wakeup_init_user(void) {
+  uint8_t layer = biton32(default_layer_state);
+  switch (layer) {
+    case _BASE:
+      rgb_anim_start(RGB_ANIM_DURATION_WAKEUP, RGB_ANIM_MODE_WAKEUP, RGB_ANIM_HUE_BASE, 255, 255);
+      break;
+    case _QWERTZ:
+      rgb_anim_start(RGB_ANIM_DURATION_WAKEUP, RGB_ANIM_MODE_WAKEUP, RGB_ANIM_HUE_QWERTZ, 255, 255);
+      break;
+    case _NEO2:
+      rgb_anim_start(RGB_ANIM_DURATION_WAKEUP, RGB_ANIM_MODE_WAKEUP, RGB_ANIM_HUE_NEO2, 255, 255);
+      break;
+    case _EMULATOR:
+      rgb_anim_start(RGB_ANIM_DURATION_WAKEUP, RGB_ANIM_MODE_WAKEUP, RGB_ANIM_HUE_EMULATOR, 255, 255);
+      break;
+  }
+}
+
+
 // Custom down event for compatibility macros
 #define _BB_MACRO_MOD_DOWN(default, shifted) \
   if (is_shift) { \
@@ -225,30 +274,6 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     SEND_STRING((default)); \
   }
 
-// Disable RGB underglow
-void suspend_power_down_user(void) {
-  rgblight_disable_noeeprom();
-}
-
-// Highlight current layer on wakeup
-void suspend_wakeup_init_user(void) {
-  uint8_t layer = biton32(default_layer_state);
-  switch (layer) {
-    case _BASE:
-      rgb_anim_start(RGB_ANIM_DURATION_WAKEUP, RGB_ANIM_MODE_WAKEUP, RGB_ANIM_HUE_BASE, 255, 255);
-      break;
-    case _QWERTZ:
-      rgb_anim_start(RGB_ANIM_DURATION_WAKEUP, RGB_ANIM_MODE_WAKEUP, RGB_ANIM_HUE_QWERTZ, 255, 255);
-      break;
-    case _NEO2:
-      rgb_anim_start(RGB_ANIM_DURATION_WAKEUP, RGB_ANIM_MODE_WAKEUP, RGB_ANIM_HUE_NEO2, 255, 255);
-      break;
-    default:
-      rgb_anim_start(RGB_ANIM_DURATION_WAKEUP, RGB_ANIM_MODE_WAKEUP, 270, 255, 255);
-  }
-}
-
-
 static uint16_t kc_shift = 0;
 static uint8_t kc_modifiers = 0;
 
@@ -261,9 +286,8 @@ void matrix_scan_user(void) {
   rgb_anim_update();
 }
 
-static uint16_t tap_timer;
-
 static bool win_locked = false;
+static uint16_t tap_timer = 0;
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   uint8_t is_shift = keyboard_report->mods & (MOD_BIT(KC_LSFT) | MOD_BIT(KC_RSFT));
@@ -282,6 +306,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     case DF(_NEO2): // Layer switch animation => Neo2 emulation
       if (record->event.pressed) {
         rgb_anim_start(RGB_ANIM_DURATION_LAYER, RGB_ANIM_MODE_LAYER, RGB_ANIM_HUE_NEO2, 255, 255);
+      }
+      return true;
+    case DF(_EMULATOR): // Layer switch animation => 40% emulation
+      if (record->event.pressed) {
+        rgb_anim_start(RGB_ANIM_DURATION_LAYER, RGB_ANIM_MODE_LAYER, RGB_ANIM_HUE_EMULATOR, 255, 255);
       }
       return true;
 
@@ -335,8 +364,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             case _NEO2:
               rgb_anim_start(RGB_ANIM_DURATION_LAYER, RGB_ANIM_MODE_LAYER, RGB_ANIM_HUE_NEO2, 255, 255);
               break;
-            default:
-              rgb_anim_start(RGB_ANIM_DURATION_LAYER, RGB_ANIM_MODE_LAYER, 270, 255, 255);
+            case _EMULATOR:
+              rgb_anim_start(RGB_ANIM_DURATION_LAYER, RGB_ANIM_MODE_LAYER, RGB_ANIM_HUE_EMULATOR, 255, 255);
+              break;
           }
         }
       }

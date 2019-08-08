@@ -124,7 +124,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
    * |---------------------------------------------------------------------------------+       +
    * |Ctrl(Esc)|  U  |  I  |  A  |  E  |  O  |  S  |  N  |  R  |  T  |  D  |  Y  | XXX |       |
    * |-----------------------------------------------------------------------------------------+
-   * |LShift| XXX |  Ü  |  Ö  |  Ä  |  P  |  Z  |  B  |  M  |  ,  |  .  |  J  |  RShift  | Pn  |
+   * |LShift| XXX |  Ü  |  Ö  |  Ä  |  P  |  Z  |  B  |  M  |  ,  |  .  |  J  |   XXX    | Pn  |
    * |-----------------------------------------------------------------------------------------+
    * | NeoL1 | Win  | Alt  |  Space     |  XXX  |  RShift(Enter)  | NeoL2 | Win  | Ctrl | Menu |
    * `-----------------------------------------------------------------------------------------'
@@ -133,7 +133,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,      XXX,
     KC_TAB,   NEO_X,    NEO_V,    NEO_L,    NEO_C,    NEO_W,    NEO_K,    NEO_H,    NEO_G,    NEO_F,    NEO_Q,    NEO_SS,   KC_BSPC,
     MT_LCTL,  NEO_U,    NEO_I,    NEO_A,    NEO_E,    NEO_O,    NEO_S,    NEO_N,    NEO_R,    NEO_T,    NEO_D,    NEO_Y,    XXX,      XXX,
-    KC_LSFT,  XXX,      NEO_UE,   NEO_OE,   NEO_AE,   NEO_P,    NEO_Z,    NEO_B,    NEO_M,    NEO_COMM, NEO_DOT,  NEO_J,    KC_RSFT,  _BB_PN,
+    KC_LSFT,  XXX,      NEO_UE,   NEO_OE,   NEO_AE,   NEO_P,    NEO_Z,    NEO_B,    NEO_M,    NEO_COMM, NEO_DOT,  NEO_J,    XXX,      _BB_PN,
     NEO_L1_L, KC_LGUI,  KC_LALT,  KC_SPC,             XXX,                MT_RSFT,                      NEO_L2_R, KC_RGUI,  KC_RCTL,  KC_APP
   ),
 

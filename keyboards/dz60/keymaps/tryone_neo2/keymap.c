@@ -321,11 +321,30 @@ void matrix_init_user(void) {
   // Read user config from EEPROM
   user_config.raw = eeconfig_read_user();
 
-  // Clear volatile config in RAM
-  volatile_config.rgb.config_1 = 0;
-  volatile_config.rgb.config_2 = 0;
-  volatile_config.rgb.config_3 = 0;
-  volatile_config.rgb.config_4 = 0;
+  // Reset volatile config in RAM to presets
+  // 1) static gold/amber
+  rgblight_config_t preset = {
+    .enable = 1,
+    .mode = RGBLIGHT_MODE_STATIC_LIGHT,
+    .hue = 5 * RGBLIGHT_HUE_STEP,
+    .sat = 255 - 4 * RGBLIGHT_SAT_STEP,
+    .val = 255 - 6 * RGBLIGHT_VAL_STEP,
+  };
+  volatile_config.rgb.config_1 = preset.raw;
+
+  // 2) slow pulsing gold/amber
+  preset.mode = RGBLIGHT_MODE_BREATHING;
+  preset.sat = 255;
+  preset.val = 255 - 12 * RGBLIGHT_VAL_STEP,
+  volatile_config.rgb.config_2 = preset.raw;
+
+  // 3) rainbow pulsing
+  preset.mode = RGBLIGHT_MODE_RAINBOW_MOOD + 1;
+  volatile_config.rgb.config_3 = preset.raw;
+
+  // 4) rainbow wheel
+  preset.mode = RGBLIGHT_MODE_RAINBOW_SWIRL + 5;
+  volatile_config.rgb.config_4 = preset.raw;
 }
 
 void matrix_scan_user(void) {

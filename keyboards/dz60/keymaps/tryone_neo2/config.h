@@ -3,6 +3,14 @@
 
 #include "../../config.h"
 
+// Trim down on underglow effect
+#undef RGBLIGHT_ANIMATIONS
+#define RGBLIGHT_EFFECT_BREATHING
+#define RGBLIGHT_EFFECT_RAINBOW_MOOD
+#define RGBLIGHT_EFFECT_RAINBOW_SWIRL
+#define RGBLIGHT_EFFECT_SNAKE
+#define RGBLIGHT_EFFECT_STATIC_GRADIENT
+
 // Enable backlight breathing
 #define BACKLIGHT_BREATHING
 // Disable backlight when sleeping
